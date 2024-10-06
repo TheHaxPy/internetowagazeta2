@@ -1,90 +1,75 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wiadomości</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-        h1 {
-            color: #333;
-        }
-        h2 {
-            color: #007BFF;
-        }
-        a {
-            text-decoration: none;
-        }
-        img {
-            max-width: 100%;
-            height: auto;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Internetowa Gazeta</title>
+  <style>
+    .error-message {
+      color: red;
+      font-weight: bold;
+    }
+  </style>
 </head>
 <body>
-    <h1>Aktualności Google News</h1>
-    <div id="news">Ładowanie wiadomości...</div>
-    <script>
-        const rssUrl = 'https://api.rss2json.com/v1/api.json?rss_url=https://news.google.com/rss?hl=pl&gl=PL&ceid=PL:pl'; // RSS z Google News (PL)
-        const googleApiKey = 'AIzaSyCJvbNJ8ltssd9dmmkJZZALg45YPTHKqqI'; // Twój klucz API
-        const googleCx = '6232f19c451d646ac'; // Twoje ID wyszukiwarki
+  <h1>Wiadomości</h1>
+  <div id="news-container"></div>
 
-        // Pobierz wiadomości z Google News za pośrednictwem RSS2JSON
-        fetch(rssUrl)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Sieć odpowiedziała błędem.');
-                }
-                return response.json();
-            })
-            .then(data => {
-                const items = data.items.slice(0, 5); // Ogranicz do 5 artykułów, aby zmniejszyć liczbę zapytań
-                let newsHtml = '';
+  <script>
+    const apiKey = 'AIzaSyCJvbNJ8ltssd9dmmkJZZALg45YPTHKqqI';
+    const searchEngineId = '6232f19c451d646ac';
+    const newsTitles = [
+      'Zablokowany prom w Świnoujściu. Pasażer grozi, że się zabije - TVP Info',
+      'Obrońca Janusza Palikota oskarżył śledczych. Adam Bodnar komentuje - Wiadomości - Onet',
+      // Dodaj więcej tytułów wiadomości tutaj
+    ];
 
-                const imagePromises = items.map(item => {
-                    const title = item.title;
-                    const link = item.link;
+    async function searchImage(query) {
+      const url = `https://www.googleapis.com/customsearch/v1?q=${encodeURIComponent(query)}&cx=${searchEngineId}&searchType=image&key=${apiKey}`;
 
-                    return searchImage(title).then(imgUrl => {
-                        newsHtml += `<h2><a href="${link}" target="_blank">${title}</a></h2>`;
-                        newsHtml += `<img src="${imgUrl}" alt="${title}">`;
-                    });
-                });
-
-                return Promise.all(imagePromises).then(() => {
-                    document.getElementById('news').innerHTML = newsHtml || '<p>Brak wiadomości do wyświetlenia.</p>';
-                });
-            })
-            .catch(error => {
-                console.error('Błąd:', error);
-                document.getElementById('news').innerHTML = '<p>Nie można załadować wiadomości.</p>';
-            });
-
-        // Funkcja do wyszukiwania obrazów przy użyciu Google Custom Search API
-        function searchImage(query) {
-            const apiUrl = `https://www.googleapis.com/customsearch/v1?q=${encodeURIComponent(query)}&cx=${googleCx}&searchType=image&key=${googleApiKey}`;
-            return fetch(apiUrl, { mode: 'cors' })  // Dodano CORS
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Błąd podczas pobierania obrazków.');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.items && data.items.length > 0) {
-                        return data.items[0].link; // Zwróć pierwszy obrazek
-                    } else {
-                        return 'path/to/default/image.jpg'; // Zwróć domyślny obrazek, jeśli nie znaleziono
-                    }
-                })
-                .catch(error => {
-                    console.error('Błąd:', error);
-                    return 'path/to/default/image.jpg'; // Zwróć domyślny obrazek w przypadku błędu
-                });
+      try {
+        const response = await fetch(url);
+        if (response.status === 429) {
+          console.error('Za dużo zapytań, spróbuj ponownie później.');
+          return null;
         }
-    </script>
+        const data = await response.json();
+        return data.items?.[0]?.link || null;
+      } catch (error) {
+        console.error('Błąd podczas pobierania obrazka:', error);
+        return null;
+      }
+    }
+
+    async function displayNews() {
+      const container = document.getElementById('news-container');
+
+      for (const title of newsTitles) {
+        const imageUrl = await searchImage(title);
+        const newsElement = document.createElement('div');
+        
+        const titleElement = document.createElement('h2');
+        titleElement.textContent = title;
+
+        newsElement.appendChild(titleElement);
+
+        if (imageUrl) {
+          const imageElement = document.createElement('img');
+          imageElement.src = imageUrl;
+          imageElement.alt = title;
+          newsElement.appendChild(imageElement);
+        } else {
+          const errorElement = document.createElement('p');
+          errorElement.textContent = 'Nie udało się pobrać obrazka.';
+          errorElement.classList.add('error-message');
+          newsElement.appendChild(errorElement);
+        }
+
+        container.appendChild(newsElement);
+      }
+    }
+
+    displayNews();
+  </script>
 </body>
 </html>
