@@ -18,40 +18,73 @@
         a {
             text-decoration: none;
         }
+        img {
+            max-width: 100%;
+            height: auto;
+        }
     </style>
 </head>
 <body>
     <h1>Aktualności</h1>
     <div id="news">Ładowanie wiadomości...</div>
     <script>
-        const rssUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent('https://news.google.com/rss?hl=pl&gl=PL&ceid=PL:pl');
+        const rssUrl = 'http://localhost:3000/rss'; // URL do twojego lokalnego serwera
+        const googleApiKey = 'AIzaSyCJvbNJ8ltssd9dmmkJZZALg45YPTHKqqI'; // Twój klucz API
+        const googleCx = '6232f19c451d646ac'; // Twoje ID wyszukiwarki
 
-        // Użycie Fetch API do pobrania danych
         fetch(rssUrl)
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Sieć odpowiedziała błędem.');
                 }
-                return response.json();
+                return response.text();
             })
             .then(data => {
                 const parser = new DOMParser();
-                const xml = parser.parseFromString(data.contents, 'text/xml');
+                const xml = parser.parseFromString(data, 'text/xml');
                 const items = xml.querySelectorAll('item');
                 let newsHtml = '';
 
-                items.forEach(item => {
+                const imagePromises = Array.from(items).map(item => {
                     const title = item.querySelector('title').textContent;
                     const link = item.querySelector('link').textContent;
-                    newsHtml += `<h2><a href="${link}" target="_blank">${title}</a></h2>`;
+
+                    return searchImage(title).then(imgUrl => {
+                        newsHtml += `<h2><a href="${link}" target="_blank">${title}</a></h2>`;
+                        newsHtml += `<img src="${imgUrl}" alt="${title}">`;
+                    });
                 });
 
-                document.getElementById('news').innerHTML = newsHtml || '<p>Brak wiadomości do wyświetlenia.</p>';
+                return Promise.all(imagePromises).then(() => {
+                    document.getElementById('news').innerHTML = newsHtml || '<p>Brak wiadomości do wyświetlenia.</p>';
+                });
             })
             .catch(error => {
                 console.error('Błąd:', error);
                 document.getElementById('news').innerHTML = '<p>Nie można załadować wiadomości.</p>';
             });
+
+        function searchImage(query) {
+            const apiUrl = `https://www.googleapis.com/customsearch/v1?q=${encodeURIComponent(query)}&cx=${googleCx}&searchType=image&key=${googleApiKey}`;
+            return fetch(apiUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Błąd podczas pobierania obrazków.');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.items && data.items.length > 0) {
+                        return data.items[0].link; // Zwróć pierwszy obrazek
+                    } else {
+                        return 'path/to/default/image.jpg'; // Zwróć domyślny obrazek, jeśli nie znaleziono
+                    }
+                })
+                .catch(error => {
+                    console.error('Błąd:', error);
+                    return 'path/to/default/image.jpg'; // Zwróć domyślny obrazek w przypadku błędu
+                });
+        }
     </script>
 </body>
 </html>
