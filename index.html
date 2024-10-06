@@ -28,26 +28,24 @@
     <h1>Aktualności</h1>
     <div id="news">Ładowanie wiadomości...</div>
     <script>
-        const rssUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://wiadomosci.wp.pl/rss');
+        const rssToJsonUrl = 'https://api.rss2json.com/v1/api.json?rss_url=https://wiadomosci.wp.pl/rss';
         const googleApiKey = 'AIzaSyCJvbNJ8ltssd9dmmkJZZALg45YPTHKqqI'; // Twój klucz API
         const googleCx = '6232f19c451d646ac'; // Twoje ID wyszukiwarki
 
-        fetch(rssUrl)
+        fetch(rssToJsonUrl)
             .then(response => {
                 if (!response.ok) {
-                    throw new Error('Błąd w odpowiedzi sieci.');
+                    throw new Error('Sieć odpowiedziała błędem.');
                 }
-                return response.text();
+                return response.json();
             })
             .then(data => {
-                const parser = new DOMParser();
-                const xml = parser.parseFromString(data, 'application/xml');
-                const items = xml.querySelectorAll('item');
+                const items = data.items;
                 let newsHtml = '';
 
-                const imagePromises = Array.from(items).map(item => {
-                    const title = item.querySelector('title').textContent;
-                    const link = item.querySelector('link').textContent;
+                const imagePromises = items.map(item => {
+                    const title = item.title;
+                    const link = item.link;
 
                     return searchImage(title).then(imgUrl => {
                         newsHtml += `<h2><a href="${link}" target="_blank">${title}</a></h2>`;
