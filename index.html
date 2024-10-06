@@ -28,11 +28,12 @@
     <h1>Aktualności Google News</h1>
     <div id="news">Ładowanie wiadomości...</div>
     <script>
-        const rssToJsonUrl = 'https://api.rss2json.com/v1/api.json?rss_url=https://news.google.com/rss?hl=pl&gl=PL&ceid=PL:pl'; // Google News RSS (PL)
+        const rssUrl = 'https://api.rss2json.com/v1/api.json?rss_url=https://news.google.com/rss?hl=pl&gl=PL&ceid=PL:pl'; // RSS z Google News (PL)
         const googleApiKey = 'AIzaSyCJvbNJ8ltssd9dmmkJZZALg45YPTHKqqI'; // Twój klucz API
         const googleCx = '6232f19c451d646ac'; // Twoje ID wyszukiwarki
 
-        fetch(rssToJsonUrl)
+        // Pobierz wiadomości z Google News za pośrednictwem RSS2JSON
+        fetch(rssUrl)
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Sieć odpowiedziała błędem.');
@@ -62,9 +63,10 @@
                 document.getElementById('news').innerHTML = '<p>Nie można załadować wiadomości.</p>';
             });
 
+        // Funkcja do wyszukiwania obrazów przy użyciu Google Custom Search API
         function searchImage(query) {
             const apiUrl = `https://www.googleapis.com/customsearch/v1?q=${encodeURIComponent(query)}&cx=${googleCx}&searchType=image&key=${googleApiKey}`;
-            return fetch(apiUrl)
+            return fetch(apiUrl, { mode: 'cors' })  // Dodano CORS
                 .then(response => {
                     if (!response.ok) {
                         throw new Error('Błąd podczas pobierania obrazków.');
