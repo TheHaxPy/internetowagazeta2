@@ -24,8 +24,7 @@
     <h1>Aktualności</h1>
     <div id="news">Ładowanie wiadomości...</div>
     <script>
-        // Używaj lokalnego serwera
-        const rssUrl = 'http://localhost:3000/rss';
+        const rssUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent('https://news.google.com/rss?hl=pl&gl=PL&ceid=PL:pl');
 
         // Użycie Fetch API do pobrania danych
         fetch(rssUrl)
@@ -33,11 +32,11 @@
                 if (!response.ok) {
                     throw new Error('Sieć odpowiedziała błędem.');
                 }
-                return response.text();
+                return response.json();
             })
             .then(data => {
                 const parser = new DOMParser();
-                const xml = parser.parseFromString(data, 'text/xml');
+                const xml = parser.parseFromString(data.contents, 'text/xml');
                 const items = xml.querySelectorAll('item');
                 let newsHtml = '';
 
