@@ -1,24 +1,28 @@
-const express = require('express'); // Upewnij się, że to jest pierwsza linia
-const axios = require('axios');
-const cors = require('cors');
+const rssUrl = 'https://cors-anywhere.herokuapp.com/https://news.google.com/rss?hl=pl&gl=PL&ceid=PL:pl';
 
-const app = express();
-const PORT = process.env.PORT || 3000;
+// Użycie Fetch API do pobrania danych
+fetch(rssUrl)
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Sieć odpowiedziała błędem.');
+        }
+        return response.text();
+    })
+    .then(data => {
+        const parser = new DOMParser();
+        const xml = parser.parseFromString(data, 'text/xml');
+        const items = xml.querySelectorAll('item');
+        let newsHtml = '';
 
-app.use(cors());
+        items.forEach(item => {
+            const title = item.querySelector('title').textContent;
+            const link = item.querySelector('link').textContent;
+            newsHtml += `<h2><a href="${link}" target="_blank">${title}</a></h2>`;
+        });
 
-app.get('/rss', async (req, res) => {
-    const url = 'https://news.google.com/rss?hl=pl&gl=PL&ceid=PL:pl';
-    try {
-        const response = await axios.get(url);
-        res.set('Content-Type', 'text/xml');
-        res.send(response.data);
-    } catch (error) {
-        console.error('Error fetching the RSS feed:', error);
-        res.status(500).send('Error fetching the RSS feed');
-    }
-});
-
-app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
-});
+        document.getElementById('news').innerHTML = newsHtml || '<p>Brak wiadomości do wyświetlenia.</p>';
+    })
+    .catch(error => {
+        console.error('Błąd:', error);
+        document.getElementById('news').innerHTML = '<p>Nie można załadować wiadomości.</p>';
+    });
