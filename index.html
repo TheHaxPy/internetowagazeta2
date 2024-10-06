@@ -28,20 +28,20 @@
     <h1>Aktualności</h1>
     <div id="news">Ładowanie wiadomości...</div>
     <script>
-        const rssUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent('https://wiadomosci.wp.pl/rss'); // Przykładowy RSS z WP przez CORS Anywhere
+        const rssUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://wiadomosci.wp.pl/rss');
         const googleApiKey = 'AIzaSyCJvbNJ8ltssd9dmmkJZZALg45YPTHKqqI'; // Twój klucz API
         const googleCx = '6232f19c451d646ac'; // Twoje ID wyszukiwarki
 
         fetch(rssUrl)
             .then(response => {
                 if (!response.ok) {
-                    throw new Error('Sieć odpowiedziała błędem.');
+                    throw new Error('Błąd w odpowiedzi sieci.');
                 }
                 return response.text();
             })
             .then(data => {
                 const parser = new DOMParser();
-                const xml = parser.parseFromString(data, 'text/xml');
+                const xml = parser.parseFromString(data, 'application/xml');
                 const items = xml.querySelectorAll('item');
                 let newsHtml = '';
 
