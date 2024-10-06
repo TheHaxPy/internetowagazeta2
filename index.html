@@ -41,7 +41,7 @@
                 return response.json();
             })
             .then(data => {
-                const items = data.items;
+                const items = data.items.slice(0, 5); // Ogranicz do 5 artykułów, aby zmniejszyć liczbę zapytań
                 let newsHtml = '';
 
                 const imagePromises = items.map(item => {
