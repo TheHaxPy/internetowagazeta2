@@ -18,11 +18,6 @@
   <script>
     const apiKey = 'AIzaSyCJvbNJ8ltssd9dmmkJZZALg45YPTHKqqI';
     const searchEngineId = '6232f19c451d646ac';
-    const newsTitles = [
-      'Zablokowany prom w Świnoujściu. Pasażer grozi, że się zabije - TVP Info',
-      'Obrońca Janusza Palikota oskarżył śledczych. Adam Bodnar komentuje - Wiadomości - Onet',
-      // Dodaj więcej tytułów wiadomości tutaj
-    ];
 
     async function searchImage(query) {
       const url = `https://www.googleapis.com/customsearch/v1?q=${encodeURIComponent(query)}&cx=${searchEngineId}&searchType=image&key=${apiKey}`;
@@ -43,6 +38,7 @@
 
     async function displayNews() {
       const container = document.getElementById('news-container');
+      const newsTitles = []; // Dodaj tutaj tytuły wiadomości dynamicznie po zresetowaniu quota
 
       for (const title of newsTitles) {
         const imageUrl = await searchImage(title);
