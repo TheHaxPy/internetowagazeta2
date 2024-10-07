@@ -3,66 +3,92 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Internetowa Gazeta</title>
+  <title>Internetowa Gazeta - Wiadomości z Polski</title>
   <style>
+    body {
+      font-family: Arial, sans-serif;
+    }
+    h1 {
+      color: #333;
+    }
+    .news-container {
+      margin-bottom: 20px;
+    }
     .error-message {
       color: red;
       font-weight: bold;
     }
+    img {
+      max-width: 100%;
+      height: auto;
+    }
   </style>
 </head>
 <body>
-  <h1>Wiadomości</h1>
+  <h1>Wiadomości z Polski</h1>
   <div id="news-container"></div>
 
   <script>
-    const apiKey = 'AIzaSyCJvbNJ8ltssd9dmmkJZZALg45YPTHKqqI';
-    const searchEngineId = '6232f19c451d646ac';
+    const apiKey = 'AIzaSyCJvbNJ8ltssd9dmmkJZZALg45YPTHKqqI'; // Twój klucz API
+    const searchEngineId = '6232f19c451d646ac'; // Twój ID wyszukiwarki niestandardowej
 
-    async function searchImage(query) {
-      const url = `https://www.googleapis.com/customsearch/v1?q=${encodeURIComponent(query)}&cx=${searchEngineId}&searchType=image&key=${apiKey}`;
+    async function searchNews(query) {
+      const url = `https://www.googleapis.com/customsearch/v1?q=${encodeURIComponent(query)}&cx=${searchEngineId}&lr=lang_pl&num=5&key=${apiKey}`;
 
       try {
         const response = await fetch(url);
         if (response.status === 429) {
-          console.error('Za dużo zapytań, spróbuj ponownie później.');
+          console.error('Przekroczono limit zapytań. Spróbuj ponownie później.');
           return null;
         }
         const data = await response.json();
-        return data.items?.[0]?.link || null;
+        return data.items || [];
       } catch (error) {
-        console.error('Błąd podczas pobierania obrazka:', error);
-        return null;
+        console.error('Błąd podczas pobierania wiadomości:', error);
+        return [];
       }
     }
 
     async function displayNews() {
       const container = document.getElementById('news-container');
-      const newsTitles = []; // Dodaj tutaj tytuły wiadomości dynamicznie po zresetowaniu quota
+      const query = 'wiadomości z Polski'; // Zapytanie do Google News dla Polski
 
-      for (const title of newsTitles) {
-        const imageUrl = await searchImage(title);
+      const newsItems = await searchNews(query);
+
+      if (newsItems.length === 0) {
+        const errorElement = document.createElement('p');
+        errorElement.textContent = 'Nie udało się pobrać wiadomości.';
+        errorElement.classList.add('error-message');
+        container.appendChild(errorElement);
+        return;
+      }
+
+      newsItems.forEach(item => {
         const newsElement = document.createElement('div');
-        
+        newsElement.classList.add('news-container');
+
         const titleElement = document.createElement('h2');
-        titleElement.textContent = title;
+        const linkElement = document.createElement('a');
+        linkElement.href = item.link;
+        linkElement.textContent = item.title;
+        linkElement.target = '_blank';
+        titleElement.appendChild(linkElement);
+
+        const snippetElement = document.createElement('p');
+        snippetElement.textContent = item.snippet;
 
         newsElement.appendChild(titleElement);
+        newsElement.appendChild(snippetElement);
 
-        if (imageUrl) {
+        if (item.pagemap && item.pagemap.cse_image && item.pagemap.cse_image.length > 0) {
           const imageElement = document.createElement('img');
-          imageElement.src = imageUrl;
-          imageElement.alt = title;
+          imageElement.src = item.pagemap.cse_image[0].src;
+          imageElement.alt = item.title;
           newsElement.appendChild(imageElement);
-        } else {
-          const errorElement = document.createElement('p');
-          errorElement.textContent = 'Nie udało się pobrać obrazka.';
-          errorElement.classList.add('error-message');
-          newsElement.appendChild(errorElement);
         }
 
         container.appendChild(newsElement);
-      }
+      });
     }
 
     displayNews();
