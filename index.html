@@ -22,6 +22,21 @@
       max-width: 100%;
       height: auto;
     }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    table, th, td {
+      border: 1px solid #ddd;
+    }
+    th, td {
+      padding: 10px;
+      text-align: left;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
   </style>
 </head>
 <body>
@@ -51,44 +66,54 @@
 
     async function displayNews() {
       const container = document.getElementById('news-container');
-      const query = 'wiadomości z Polski'; // Zapytanie do Google News dla Polski
+      const queries = ['Onet', 'WP', 'Interia', 'Gazeta.pl']; // Lista stron
 
-      const newsItems = await searchNews(query);
+      const table = document.createElement('table');
+      const tableHead = document.createElement('thead');
+      tableHead.innerHTML = `
+        <tr>
+          <th>Strona</th>
+          <th>Najważniejsze wiadomości</th>
+        </tr>`;
+      table.appendChild(tableHead);
 
-      if (newsItems.length === 0) {
-        const errorElement = document.createElement('p');
-        errorElement.textContent = 'Nie udało się pobrać wiadomości.';
-        errorElement.classList.add('error-message');
-        container.appendChild(errorElement);
-        return;
+      const tableBody = document.createElement('tbody');
+
+      for (const query of queries) {
+        const newsItems = await searchNews(query);
+
+        if (newsItems.length > 0) {
+          const row = document.createElement('tr');
+
+          // Kolumna z nazwą strony
+          const siteNameCell = document.createElement('td');
+          siteNameCell.textContent = query;
+          row.appendChild(siteNameCell);
+
+          // Kolumna z wiadomościami
+          const newsCell = document.createElement('td');
+          const newsList = document.createElement('ul');
+
+          // Wyświetl maksymalnie 3 wiadomości
+          newsItems.slice(0, 3).forEach(item => {
+            const newsListItem = document.createElement('li');
+            const linkElement = document.createElement('a');
+            linkElement.href = item.link;
+            linkElement.textContent = item.title;
+            linkElement.target = '_blank';
+            newsListItem.appendChild(linkElement);
+            newsList.appendChild(newsListItem);
+          });
+
+          newsCell.appendChild(newsList);
+          row.appendChild(newsCell);
+
+          tableBody.appendChild(row);
+        }
       }
 
-      newsItems.forEach(item => {
-        const newsElement = document.createElement('div');
-        newsElement.classList.add('news-container');
-
-        const titleElement = document.createElement('h2');
-        const linkElement = document.createElement('a');
-        linkElement.href = item.link;
-        linkElement.textContent = item.title;
-        linkElement.target = '_blank';
-        titleElement.appendChild(linkElement);
-
-        const snippetElement = document.createElement('p');
-        snippetElement.textContent = item.snippet;
-
-        newsElement.appendChild(titleElement);
-        newsElement.appendChild(snippetElement);
-
-        if (item.pagemap && item.pagemap.cse_image && item.pagemap.cse_image.length > 0) {
-          const imageElement = document.createElement('img');
-          imageElement.src = item.pagemap.cse_image[0].src;
-          imageElement.alt = item.title;
-          newsElement.appendChild(imageElement);
-        }
-
-        container.appendChild(newsElement);
-      });
+      table.appendChild(tableBody);
+      container.appendChild(table);
     }
 
     displayNews();
